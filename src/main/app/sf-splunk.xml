@@ -10,20 +10,30 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
 	<sub-flow name="sf-push-logs">
+	
 		<dw:transform-message doc:name="DW: Prepare Logs Push Request">
 			<dw:set-payload resource="classpath:dwScripts\setJsonPayload.dwl" />
 			<dw:set-variable resource="classpath:dwScripts\logsPayloadSizeCal.dwl"
 				variableName="logsPayloadSize" />
+            <dw:set-variable resource="classpath:set-outBoundServer.dwl" variableName="outBoundServer"/>
 		</dw:transform-message>
 		<choice doc:name="Choice">
 			<when expression="#[flowVars.logsPayloadSize &gt; 0]">
-				<http:request config-ref="HTTPSplunkHECConnector" path="/services/collector" method="POST" doc:name="HTTP">
-                    <http:request-builder>
-                        <http:header headerName="Host" value="${splunk.host}"/>
-                        <http:header headerName="Authorization" value="${splunk.token}"/>
-                    </http:request-builder>
-                </http:request>
-				<logger message="Logs pushed" level="INFO" doc:name="Logger" />
+                <choice doc:name="Choice">
+                    <when expression="#[flowVars.outBoundServer == 'elk']">
+                        <logger message="#[payload]" level="INFO" category="org.system.log.elk" doc:name="Logger for pushing logs to ELK"/>
+                    </when>
+                    <otherwise>
+                        <http:request config-ref="HTTPSplunkHECConnector" path="/services/collector" method="POST" doc:name="HTTP">
+                            <http:request-builder>
+                                <http:header headerName="Host" value="${splunk.host}"/>
+                                <http:header headerName="Authorization" value="${splunk.token}"/>
+                            </http:request-builder>
+                        </http:request>
+                        <logger message="Logs pushed" level="INFO" doc:name="Logger"/>
+                    </otherwise>
+                </choice>
+
 			</when>
 			<otherwise>
 				<logger

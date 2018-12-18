@@ -1,33 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Configuration>
-    <Appenders>
-        <RollingFile name="file" fileName="${sys:mule.home}${sys:file.separator}logs${sys:file.separator}cloudsplunky.log" 
-                 filePattern="${sys:mule.home}${sys:file.separator}logs${sys:file.separator}cloudsplunky-%i.log">
-            <PatternLayout pattern="%d [%t] %-5p %c - %m%n" />
-            <SizeBasedTriggeringPolicy size="10 MB" />
-            <DefaultRolloverStrategy max="10"/>
-        </RollingFile>
-    </Appenders>
-    <Loggers>
-        <!-- CXF is used heavily by Mule for web services -->
-        <AsyncLogger name="org.apache.cxf" level="WARN"/>
+	<Appenders>
+		<RollingFile name="file"
+			fileName="${sys:mule.home}${sys:file.separator}logs${sys:file.separator}cloudsplunky.log"
+			filePattern="${sys:mule.home}${sys:file.separator}logs${sys:file.separator}cloudsplunky-%i.log">
+			<PatternLayout pattern="%d [%t] %-5p %c - %m%n" />
+			<SizeBasedTriggeringPolicy size="10 MB" />
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<Http name="http1" url="http://ec2-3-80-106-96.compute-1.amazonaws.com:8080/log1">
+			<PatternLayout pattern="%m" />
+		</Http>
+		<Http name="http2" url="http://52.90.221.211:8080/log2"  token="%user_httpeventcollector_token%"
+			disableCertificateValidation="true">
+			<PatternLayout pattern="%m" />
+		</Http>
+	</Appenders>
+	<Loggers>
+		<!-- CXF is used heavily by Mule for web services -->
+		<AsyncLogger name="org.apache.cxf" level="WARN" />
 
-        <!-- Apache Commons tend to make a lot of noise which can clutter the log-->
-        <AsyncLogger name="org.apache" level="WARN"/>
+		<!-- Apache Commons tend to make a lot of noise which can clutter the log -->
+		<AsyncLogger name="org.apache" level="WARN" />
 
-        <!-- Reduce startup noise -->
-        <AsyncLogger name="org.springframework.beans.factory" level="WARN"/>
+		<!-- Reduce startup noise -->
+		<AsyncLogger name="org.springframework.beans.factory"
+			level="WARN" />
 
-        <!-- Mule classes -->
-        <AsyncLogger name="org.mule" level="INFO"/>
-        <AsyncLogger name="com.mulesoft" level="INFO"/>
+		<!-- Mule classes -->
+		<AsyncLogger name="org.mule" level="INFO" />
+		<AsyncLogger name="com.mulesoft" level="INFO" />
 
-        <!-- Reduce DM verbosity -->
-        <AsyncLogger name="org.jetel" level="WARN"/>
-        <AsyncLogger name="Tracking" level="WARN"/>
-        
-        <AsyncRoot level="INFO">
-            <AppenderRef ref="file" />
-        </AsyncRoot>
-    </Loggers>
+		<!-- Reduce DM verbosity -->
+		<AsyncLogger name="org.jetel" level="WARN" />
+		<AsyncLogger name="Tracking" level="WARN" />
+		
+		<AsyncLogger name="org.system.log.elk" level="INFO" additivity="false">
+    		<AppenderRef ref="http1" />
+ 		</AsyncLogger>
+		<!-- <category name="org.system.log.elk" additivity="false">
+    		<AppenderRef ref="http1" />
+ 		</category> -->
+ 		<category name="org.system.2" additivity="false">
+    		<AppenderRef ref="http2" />
+ 		</category>
+ 
+		<AsyncRoot level="INFO">
+			<AppenderRef ref="file" />
+		</AsyncRoot>
+	</Loggers>
 </Configuration>
